@@ -23,3 +23,9 @@ func main() {
   router.Run(fasthttp.New(port))
 }
 ```
+
+## Notes
+If you're not interested in protecting every single route (putting [`/health`](https://github.com/jessemillar/health) behind authentication just seems silly), you can use [Echo Groups](https://echo.labstack.com/middleware/overview):
+```
+router.Group("/command", wso2jwt.ValidateJWT())
+```
