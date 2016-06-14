@@ -25,7 +25,7 @@ func main() {
 ```
 
 ## Notes
-If you're not interested in protecting every single route (putting [`/health`](https://github.com/jessemillar/health) behind authentication just seems silly), you can use [Echo Groups](https://echo.labstack.com/middleware/overview):
+If you're not interested in protecting every single route (putting [`/health`](https://github.com/jessemillar/health) behind authentication just seems silly), you can use [Echo Groups](https://echo.labstack.com/middleware/overview) instead of `router.Use()`:
 ```
 router.Group("/command", wso2jwt.ValidateJWT())
 ```
