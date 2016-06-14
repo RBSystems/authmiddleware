@@ -85,7 +85,7 @@ func lookupSigningKey(keyID interface{}) ([]byte, error) {
 
 	for i := range allKeys.Keys {
 		if allKeys.Keys[i].Kid == keyID {
-			return []byte(allKeys.Keys[0].N), nil
+			return []byte("-----BEGIN PUBLIC KEY-----\n" + allKeys.Keys[0].N + "\n-----END PUBLIC KEY-----"), nil
 		}
 	}
 

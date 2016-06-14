@@ -1,6 +1,6 @@
 # wso2jwt
 
-JSON wants returned values to be in key-value format. This package removes a couple lines of code I got tired of copypasta-ing between projects.
+Validating [JWT tokens](https://jwt.io/) with BYU's implementation of [WSO2](http://wso2.com/products/api-manager/) isn't the easiest thing on the planet. We wanted to make sure that we protected every route with a JWT check and, as part of that check, pulled in the latest signing key.
 
 ## Dependencies
 - [Echo](https://labstack.com/echo)
