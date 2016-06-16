@@ -27,10 +27,8 @@ type keys struct {
 func ValidateJWT() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(context echo.Context) error {
-			token := context.Request().Header().Get("Authorization")
-			if token != "" {
-				token = token[7:] // Remove "Bearer " from the token
-			} else {
+			token := context.Request().Header().Get("X-jwt-assertion")
+			if token == "" {
 				return jsonresp.New(context, http.StatusBadRequest, "No Authorization header present")
 			}
 
@@ -50,7 +48,7 @@ func validate(token string) error {
 			return nil, fmt.Errorf("Unexpected signing method: %v", parsedToken.Header["alg"]) // This error never gets returned to the user but may be useful for debugging/logging at some point
 		}
 
-		return lookupSigningKey(parsedToken.Header["kid"])
+		return lookupSigningKey()
 	})
 
 	if parsedToken.Valid {
@@ -66,7 +64,7 @@ func validate(token string) error {
 	return errors.New("Not authorized")
 }
 
-func lookupSigningKey(keyID interface{}) ([]byte, error) {
+func lookupSigningKey() ([]byte, error) {
 	response, err := http.Get("https://api.byu.edu/.well-known/byucerts")
 	if err != nil {
 		return nil, err
@@ -83,11 +81,5 @@ func lookupSigningKey(keyID interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-	for i := range allKeys.Keys {
-		if allKeys.Keys[i].Kid == keyID {
-			return []byte("-----BEGIN PUBLIC KEY-----\n" + allKeys.Keys[0].N + "\n-----END PUBLIC KEY-----"), nil
-		}
-	}
-
-	return nil, errors.New("Could not find a valid signing key")
+	return []byte("-----BEGIN CERTIFICATE-----\n" + allKeys.Keys[0].X5C[0] + "\n-----END CERTIFICATE-----"), nil
 }
