@@ -84,5 +84,7 @@ func lookupSigningKey() ([]byte, error) {
 		return nil, err
 	}
 
-	return []byte("-----BEGIN CERTIFICATE-----\n" + allKeys.Keys[0].X5C[0] + "\n-----END CERTIFICATE-----"), nil
+	certificate := "-----BEGIN CERTIFICATE-----\n" + allKeys.Keys[0].X5C[0] + "\n-----END CERTIFICATE-----"
+	log.Println(certificate)
+	return []byte(certificate), nil
 }
