@@ -49,7 +49,14 @@ func validate(token string) error {
 			return nil, fmt.Errorf("Unexpected signing method: %v", parsedToken.Header["alg"]) // This error never gets returned to the user but may be useful for debugging/logging at some point
 		}
 
-		return lookupSigningKey()
+		// Look up key
+		key, err := lookupSigningKey()
+		if err != nil {
+			return nil, err
+		}
+
+		// Unpack key from PEM encoded PKCS8
+		return jwt.ParseRSAPublicKeyFromPEM(key)
 	})
 
 	log.Printf("%+v", parsedToken)
