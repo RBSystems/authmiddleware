@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
@@ -50,6 +51,8 @@ func validate(token string) error {
 
 		return lookupSigningKey()
 	})
+
+	log.Printf("%+v", parsedToken)
 
 	if parsedToken.Valid {
 		return nil
