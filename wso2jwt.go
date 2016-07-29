@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jessemillar/jsonresp"
@@ -28,14 +29,16 @@ type keys struct {
 func ValidateJWT() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(context echo.Context) error {
-			token := context.Request().Header().Get("X-jwt-assertion")
-			if token == "" {
-				return jsonresp.New(context, http.StatusBadRequest, "No Authorization header present")
-			}
+			if len(os.Getenv("PI_TOUCHPANEL")) == 0 {
+				token := context.Request().Header().Get("X-jwt-assertion")
+				if token == "" {
+					return jsonresp.New(context, http.StatusBadRequest, "No Authorization header present")
+				}
 
-			err := validate(token)
-			if err != nil {
-				return jsonresp.New(context, http.StatusBadRequest, err.Error())
+				err := validate(token)
+				if err != nil {
+					return jsonresp.New(context, http.StatusBadRequest, err.Error())
+				}
 			}
 
 			return next(context)
