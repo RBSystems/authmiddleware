@@ -29,7 +29,7 @@ type keys struct {
 func ValidateJWT() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(context echo.Context) error {
-			if len(os.Getenv("PI_TOUCHPANEL")) == 0 {
+			if len(os.Getenv("LOCAL_ENVIRONMENT")) == 0 {
 				token := context.Request().Header().Get("X-jwt-assertion")
 				if token == "" {
 					return jsonresp.New(context, http.StatusBadRequest, "No Authorization header present")
