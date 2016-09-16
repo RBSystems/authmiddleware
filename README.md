@@ -25,6 +25,14 @@ func main() {
 }
 ```
 
+## Local Development
+The WSO2 JWT checking "pipeline" will not work from your local box. To enable local development without headaches, be sure to set the `LOCAL_ENVIRONMENT` variable in you shell environment.
+
+Example (using `/etc/environment`):
+```
+export LOCAL_ENVIRONMENT="true"
+```
+
 ## Notes
 If you're not interested in protecting every single route (putting [`/health`](https://github.com/jessemillar/health) behind authentication just seems silly), you can use [Echo Groups](https://echo.labstack.com/middleware/overview) instead of `router.Use()`:
 ```
