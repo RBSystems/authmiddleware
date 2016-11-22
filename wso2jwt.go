@@ -30,7 +30,7 @@ func ValidateJWT() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(context echo.Context) error {
 			if len(os.Getenv("LOCAL_ENVIRONMENT")) == 0 {
-				token := context.Request().Header().Get("X-jwt-assertion")
+				token := context.Request.Header.Get("X-jwt-assertion")
 				if token == "" {
 					jsonresp.New(context.Response(), http.StatusBadRequest, "No WSO2-provided `X-jwt-assertion` header present")
 					return nil
