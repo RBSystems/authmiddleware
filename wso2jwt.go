@@ -27,8 +27,6 @@ type keys struct {
 // ValidateJWT is the middleware function
 func ValidateJWT(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		log.Printf("Inside middleware")
-
 		if len(os.Getenv("LOCAL_ENVIRONMENT")) == 0 { // If the `LOCAL_ENVIRONMENT` environment variable isn't set, proceed
 			token := request.Header.Get("X-jwt-assertion")
 			if token == "" {
