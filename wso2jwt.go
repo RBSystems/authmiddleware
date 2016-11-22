@@ -11,7 +11,6 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jessemillar/jsonresp"
-	"github.com/labstack/echo"
 )
 
 type keys struct {
@@ -26,26 +25,26 @@ type keys struct {
 }
 
 // ValidateJWT is the middleware function
-func ValidateJWT() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(context echo.Context) error {
-			if len(os.Getenv("LOCAL_ENVIRONMENT")) == 0 {
-				token := context.Request().Header["X-jwt-assertion"][0]
-				if token == "" {
-					jsonresp.New(context.Response(), http.StatusBadRequest, "No WSO2-provided `X-jwt-assertion` header present")
-					return nil
-				}
+func ValidateJWT(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		log.Printf("Inside middleware")
 
-				err := validate(token)
-				if err != nil {
-					jsonresp.New(context.Response(), http.StatusBadRequest, err.Error())
-					return nil
-				}
+		if len(os.Getenv("LOCAL_ENVIRONMENT")) == 0 { // If the `LOCAL_ENVIRONMENT` environment variable isn't set, proceed
+			token := request.Header.Get("X-jwt-assertion")
+			if token == "" {
+				jsonresp.New(writer, http.StatusBadRequest, "No WSO2-provided `X-jwt-assertion` header present")
+				return
 			}
 
-			return next(context)
+			err := validate(token)
+			if err != nil {
+				jsonresp.New(writer, http.StatusBadRequest, err.Error())
+				return
+			}
 		}
-	}
+
+		next.ServeHTTP(writer, request)
+	})
 }
 
 func validate(token string) error {
