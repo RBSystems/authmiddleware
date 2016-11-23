@@ -7,10 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/jessemillar/jsonresp"
 )
 
 type keys struct {
@@ -24,28 +22,7 @@ type keys struct {
 	} `json:"keys"`
 }
 
-// ValidateJWT is the middleware function
-func ValidateJWT(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if len(os.Getenv("LOCAL_ENVIRONMENT")) == 0 { // If the `LOCAL_ENVIRONMENT` environment variable isn't set, proceed
-			token := request.Header.Get("X-jwt-assertion")
-			if token == "" {
-				jsonresp.New(writer, http.StatusBadRequest, "No WSO2-provided `X-jwt-assertion` header present")
-				return
-			}
-
-			err := validate(token)
-			if err != nil {
-				jsonresp.New(writer, http.StatusBadRequest, err.Error())
-				return
-			}
-		}
-
-		next.ServeHTTP(writer, request)
-	})
-}
-
-func validate(token string) error {
+func Validate(token string) error {
 	parsedToken, err := jwt.Parse(token, func(parsedToken *jwt.Token) (interface{}, error) {
 		if parsedToken.Method.Alg() != "RS256" { // Check that our keys are signed with RS256 as expected (https://auth0.com/blog/2015/03/31/critical-vulnerabilities-in-json-web-token-libraries/)
 			return nil, fmt.Errorf("Unexpected signing method: %v", parsedToken.Header["alg"]) // This error never gets returned to the user but may be useful for debugging/logging at some point
