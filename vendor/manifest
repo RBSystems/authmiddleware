@@ -1,0 +1,37 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/dgrijalva/jwt-go",
+			"repository": "https://github.com/dgrijalva/jwt-go",
+			"vcs": "git",
+			"revision": "d2709f9f1f31ebcda9651b03077758c1f3a0018c",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/jessemillar/jsonresp",
+			"repository": "https://github.com/jessemillar/jsonresp",
+			"vcs": "git",
+			"revision": "f6268670ca1a1b59f4e6503eb55e273576877eaf",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/mavricknz/asn1-ber",
+			"repository": "https://github.com/mavricknz/asn1-ber",
+			"vcs": "git",
+			"revision": "b9df1c2f4213e9acfe05cbd20696ac5fc0d5c70e",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/mavricknz/ldap",
+			"repository": "https://github.com/mavricknz/ldap",
+			"vcs": "git",
+			"revision": "f5a958005e43f515b70d9b1a61d9c842ecd507a6",
+			"branch": "master",
+			"notests": true
+		}
+	]
+}
