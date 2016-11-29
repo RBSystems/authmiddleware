@@ -1,4 +1,4 @@
-package main
+package activedir
 
 import (
 	"fmt"
@@ -72,8 +72,4 @@ func translateGroups(groups []string) []string {
 		toReturn = append(toReturn, entry)
 	}
 	return toReturn
-}
-
-func main() {
-	GetGroupsForUser("bljoseph")
 }
