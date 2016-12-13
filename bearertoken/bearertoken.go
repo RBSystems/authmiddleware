@@ -1,6 +1,7 @@
 package bearertoken
 
 import (
+	"crypto/subtle"
 	"encoding/json"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -8,11 +9,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-type key struct {
-	Key string `json:"key"`
+type token struct {
+	Token string `json:"token"`
 }
 
-func GetToken() (key, error) {
+func GetToken() (token, error) {
 	svc := s3.New(session.New(), &aws.Config{Region: aws.String("us-west-2")})
 
 	response, err := svc.GetObject(&s3.GetObjectInput{
@@ -21,18 +22,34 @@ func GetToken() (key, error) {
 	})
 
 	if err != nil {
-		return key{}, err
+		return token{}, err
 	}
 
 	defer response.Body.Close()
 
-	result := key{}
+	result := token{}
 	decoder := json.NewDecoder(response.Body)
 
 	err = decoder.Decode(&result)
 	if err != nil {
-		return key{}, err
+		return token{}, err
 	}
 
 	return result, nil
+}
+
+func CheckToken(tokenToCheck []byte) (bool, error) {
+	token, err := GetToken()
+	if err != nil {
+		return false, err
+	}
+
+	tokenBytes := []byte(token.Token)
+
+	result := subtle.ConstantTimeCompare(tokenBytes, tokenToCheck)
+	if result == 1 {
+		return true, nil
+	}
+
+	return false, nil
 }
