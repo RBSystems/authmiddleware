@@ -28,12 +28,7 @@ func GetToken() (token, error) {
 	defer response.Body.Close()
 
 	result := token{}
-	decoder := json.NewDecoder(response.Body)
-
-	err = decoder.Decode(&result)
-	if err != nil {
-		return token{}, err
-	}
+	err = json.NewDecoder(response.Body).Decode(&result)
 
 	return result, nil
 }

@@ -71,12 +71,9 @@ func checkBearerToken(request *http.Request) (bool, error) {
 	token := request.Header.Get("Authorization") // Get the token if it exists
 
 	if len(token) > 0 { // Proceed if we found a token
-		log.Println("Found header")
-
 		parts := strings.Split(token, " ")
 
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-			log.Println("Bad header")
 			return false, errors.New("Bad Authorization header")
 		}
 
