@@ -100,10 +100,12 @@ func checkWSO2(request *http.Request) (bool, error) {
 	if len(token) > 0 { // Proceed if we found a token
 		valid, err := wso2jwt.Validate(token) // Validate the existing token
 		if err != nil {
+			log.Printf("Invalid WSO2 information")
 			return false, err
 		}
 
 		if valid {
+			log.Printf("WSO2 validated successfully")
 			return true, nil
 		}
 	}
