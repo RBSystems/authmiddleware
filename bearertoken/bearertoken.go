@@ -29,6 +29,9 @@ func GetToken() (token, error) {
 
 	result := token{}
 	err = json.NewDecoder(response.Body).Decode(&result)
+	if err != nil {
+		return token{}, err
+	}
 
 	return result, nil
 }
