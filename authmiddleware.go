@@ -4,12 +4,14 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
 	"github.com/byuoitav/authmiddleware/bearertoken"
 	"github.com/byuoitav/authmiddleware/wso2jwt"
 	"github.com/jessemillar/jsonresp"
+	"github.com/shenshouer/cas"
 )
 
 // Authenticate is the middleware function
@@ -112,4 +114,11 @@ func checkWSO2(request *http.Request) (bool, error) {
 
 	log.Printf("WSO2 check finished")
 	return false, nil
+}
+
+func CAS(next http.Handler) http.Handler {
+	var casURL = "http://cas.byu.edu"
+	url, _ := url.Parse(casURL)
+	client := cas.NewClient(&cas.Options{URL: url})
+	return client.Handler(next)
 }
