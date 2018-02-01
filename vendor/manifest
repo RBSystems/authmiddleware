@@ -10,6 +10,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/golang/glog",
+			"repository": "https://github.com/golang/glog",
+			"vcs": "git",
+			"revision": "23def4e6c14b4da8ac2ed8007337bc5eb5007998",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/jessemillar/jsonresp",
 			"repository": "https://github.com/jessemillar/jsonresp",
 			"vcs": "git",
@@ -31,6 +39,22 @@
 			"vcs": "git",
 			"revision": "f5a958005e43f515b70d9b1a61d9c842ecd507a6",
 			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/shenshouer/cas",
+			"repository": "https://github.com/shenshouer/cas",
+			"vcs": "git",
+			"revision": "821d0374dcef5f39098905b0bcea19570fbfd78d",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/yaml.v2",
+			"repository": "https://gopkg.in/yaml.v2",
+			"vcs": "git",
+			"revision": "d670f9405373e636a5a2765eea47fac0c9bc91a4",
+			"branch": "v2",
 			"notests": true
 		}
 	]
