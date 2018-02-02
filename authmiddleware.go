@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	ad "github.com/byuoitav/authmiddleware/helpers/activedir"
 	"github.com/byuoitav/authmiddleware/bearertoken"
+	ad "github.com/byuoitav/authmiddleware/helpers/activedir"
 	"github.com/byuoitav/authmiddleware/wso2jwt"
 	"github.com/jessemillar/jsonresp"
 	"github.com/shenshouer/cas"
@@ -122,17 +122,18 @@ func CAS(next http.Handler) http.Handler {
 	url, _ := url.Parse(casURL)
 	client := cas.NewClient(&cas.Options{URL: url})
 	return client.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			username := cas.Username(r)
-			attributes, err := ad.GetGroupsForUser(username)
-			if err != nil {
-				log.Printf("Something bad happened with AD...")
+		username := cas.Username(r)
+		attributes, err := ad.GetGroupsForUser(username)
+
+		if err != nil {
+			log.Printf("Something bad happened with AD...")
+		}
+		for i := range attributes {
+			if attributes[i] == os.Getenv("AD_GROUP") {
+				next.ServeHTTP(w, r)
 			}
-			for i := range attributes {
-				if attributes[i] == "a.SCOTT_HUNT-SHH24" {
-					next.ServeHTTP(w, r)
-					return
-				}
-			}
-			jsonresp.New(w, http.StatusBadRequest, "Not authorized")
-		}))
+		}
+
+		jsonresp.New(w, http.StatusBadRequest, "Not authorized")
+	}))
 }
