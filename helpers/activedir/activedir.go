@@ -3,6 +3,7 @@ package activedir
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/mavricknz/ldap"
 )
@@ -11,7 +12,7 @@ func GetGroupsForUser(userID string) ([]string, error) {
 	groups := []string{}
 
 	conn := ldap.NewLDAPConnection(
-		"byu.local",
+		"cad3.byu.edu",
 		389)
 	err := conn.Connect()
 	if err != nil {
@@ -54,22 +55,15 @@ func GetGroupsForUser(userID string) ([]string, error) {
 		groups = translateGroups(groupsTemp)
 	}
 
-	//Extract groups
-	fmt.Printf("results: %+v\n", res.Entries[0].GetAttributeValues("MemberOf")[0])
-
 	return groups, nil
 }
 
-/*Format comes in 1, needs to be translated to 2.
-  CN=AVS-TEC-SCCMAdmins,OU=Products,OU=AV Services,OU=OIT,DC=byu,DC=local
-  byu.local/OIT/AV Services/Products/AVS-TEC-SCCMAdmins
-*/
 func translateGroups(groups []string) []string {
 	toReturn := []string{}
 
 	for _, entry := range groups {
-		//TODO: See Comment
-		toReturn = append(toReturn, entry)
+		AD := strings.Split(entry, ",")
+		toReturn = append(toReturn, strings.TrimPrefix(AD[0], "CN="))
 	}
 	return toReturn
 }
