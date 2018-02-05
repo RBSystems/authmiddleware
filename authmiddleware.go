@@ -15,33 +15,12 @@ import (
 	"github.com/shenshouer/cas"
 )
 
-// Authenticate is the middleware function
+// Authenticate is the generalized middleware function
+// No CAS check for non-user access
 func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		// Go down the "if chain" checking for various authentication methods
-		passed, err := checkLocal()
-		if err != nil {
-			jsonresp.New(writer, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		if passed {
-			next.ServeHTTP(writer, request)
-			return
-		}
-
-		passed, err = checkBearerToken(request)
-		if err != nil {
-			jsonresp.New(writer, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		if passed {
-			next.ServeHTTP(writer, request)
-			return
-		}
-
-		passed, err = checkWSO2(request)
+		// If the request can pass the standard authentication then continue with the request.
+		passed, err := MachineChecks(request)
 		if err != nil {
 			jsonresp.New(writer, http.StatusBadRequest, err.Error())
 			return
@@ -54,6 +33,72 @@ func Authenticate(next http.Handler) http.Handler {
 
 		jsonresp.New(writer, http.StatusBadRequest, "Not authorized")
 	})
+}
+
+// AuthenticateUser is the middleware function for user access.
+func AuthenticateUser(next http.Handler) http.Handler {
+	u, _ := url.Parse("https://cas.byu.edu/cas")
+	c := cas.NewClient(&cas.Options{
+		URL: u,
+	})
+
+	return c.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Run through MachineChecks. If not machine access, it is a user so check their rights.
+		passed, err := MachineChecks(r)
+		if err != nil {
+			jsonresp.New(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		// If it passed the MachineChecks, allow access.
+		if passed {
+			next.ServeHTTP(w, r)
+		}
+		// If not, run through user checks with AD
+		if !passed {
+			if !cas.IsAuthenticated(r) {
+				cas.RedirectToLogin(w, r)
+				return
+			}
+			// Compare User Active Directory groups against the General Control Groups.
+			control := strings.Split(os.Getenv("GEN_CONTROL_GROUPS"), ", ")
+			access := PassGatekeeper(cas.Username(r), control)
+			if access {
+				next.ServeHTTP(w, r)
+			}
+			if !access {
+				jsonresp.New(w, http.StatusBadRequest, "Not authorized")
+			}
+		}
+	})
+}
+
+// Boolean function for the standard automated checks that need to pass for any request.
+func MachineChecks(request *http.Request) (bool, error) {
+	passed, err := checkLocal()
+	if err != nil {
+		return passed, err
+	}
+	if passed {
+		return passed, nil
+	}
+
+	passed, err = checkBearerToken(request)
+	if err != nil {
+		return passed, err
+	}
+	if passed {
+		return passed, nil
+	}
+
+	passed, err = checkWSO2(request)
+	if err != nil {
+		return passed, err
+	}
+	if passed {
+		return passed, nil
+	}
+
+	return passed, err
 }
 
 func checkLocal() (bool, error) {
@@ -117,23 +162,21 @@ func checkWSO2(request *http.Request) (bool, error) {
 	return false, nil
 }
 
-func CAS(next http.Handler) http.Handler {
-	var casURL = "http://cas.byu.edu"
-	url, _ := url.Parse(casURL)
-	client := cas.NewClient(&cas.Options{URL: url})
-	return client.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		username := cas.Username(r)
-		attributes, err := ad.GetGroupsForUser(username)
+// PassGatekeeper is the check for a user's Active Directory groups against some control groups
+// to allow access based on the needs for the request.
+func PassGatekeeper(user string, control []string) bool {
+	ADGroups, err := ad.GetGroupsForUser(user)
+	if err != nil {
+		log.Printf("Error getting groups for the user: %v", err.Error())
+		return false
+	}
 
-		if err != nil {
-			log.Printf("Something bad happened with AD...")
-		}
-		for i := range attributes {
-			if attributes[i] == os.Getenv("AD_GROUP") {
-				next.ServeHTTP(w, r)
+	for i := range control {
+		for j := range ADGroups {
+			if control[i] == ADGroups[j] {
+				return true
 			}
 		}
-
-		jsonresp.New(w, http.StatusBadRequest, "Not authorized")
-	}))
+	}
+	return false
 }
