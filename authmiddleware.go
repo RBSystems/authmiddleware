@@ -105,11 +105,14 @@ func checkLocal(r *http.Request, user bool) (bool, error) {
 	log.Printf("Local check starting")
 
 	if len(os.Getenv("LOCAL_ENVIRONMENT")) > 0 {
+		log.Printf("LOCAL_ENVIRONMENT is not null")
 		if user {
+			log.Printf("Checking for localhost IP")
 			// If doing AuthenticateUser, checkLocal can only pass from the localhost.
 			addr := strings.Split(r.RemoteAddr, "]")
 			addr[0] = strings.TrimPrefix(addr[0], "[")
 			if addr[0] != "::1" {
+				log.Printf("Request not from localhost")
 				log.Printf("Local check finished")
 				return false, nil
 			}
