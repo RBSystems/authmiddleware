@@ -20,7 +20,7 @@ import (
 func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		// If the request can pass the standard authentication then continue with the request.
-		passed, err := MachineChecks(request)
+		passed, err := MachineChecks(request, false)
 		if err != nil {
 			jsonresp.New(writer, http.StatusBadRequest, err.Error())
 			return
@@ -44,7 +44,7 @@ func AuthenticateUser(next http.Handler) http.Handler {
 
 	return c.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Run through MachineChecks. If not machine access, it is a user so check their rights.
-		passed, err := MachineChecks(r)
+		passed, err := MachineChecks(r, true)
 		if err != nil {
 			jsonresp.New(w, http.StatusBadRequest, err.Error())
 			return
@@ -73,8 +73,8 @@ func AuthenticateUser(next http.Handler) http.Handler {
 }
 
 // Boolean function for the standard automated checks that need to pass for any request.
-func MachineChecks(request *http.Request) (bool, error) {
-	passed, err := checkLocal()
+func MachineChecks(request *http.Request, user bool) (bool, error) {
+	passed, err := checkLocal(request, user)
 	if err != nil {
 		return passed, err
 	}
@@ -101,10 +101,22 @@ func MachineChecks(request *http.Request) (bool, error) {
 	return passed, err
 }
 
-func checkLocal() (bool, error) {
+func checkLocal(r *http.Request, user bool) (bool, error) {
 	log.Printf("Local check starting")
 
 	if len(os.Getenv("LOCAL_ENVIRONMENT")) > 0 {
+		log.Printf("LOCAL_ENVIRONMENT is not null")
+		if user {
+			log.Printf("Checking for localhost IP")
+			// If doing AuthenticateUser, checkLocal can only pass from the localhost.
+			addr := strings.Split(r.RemoteAddr, "]")
+			addr[0] = strings.TrimPrefix(addr[0], "[")
+			if addr[0] != "::1" {
+				log.Printf("Request not from localhost")
+				log.Printf("Local check finished")
+				return false, nil
+			}
+		}
 		log.Printf("Authorized via LOCAL_ENVIRONMENT")
 		return true, nil
 	}
