@@ -98,7 +98,7 @@ func MachineChecks(request *http.Request, user bool) (bool, error) {
 		return passed, nil
 	}
 
-	return passed, err
+	return false, err
 }
 
 func checkLocal(r *http.Request, user bool) (bool, error) {
@@ -174,16 +174,10 @@ func checkWSO2(request *http.Request) (bool, error) {
 	return false, nil
 }
 
-<<<<<<< HEAD
-func CAS(next http.Handler) http.Handler {
-	var casURL = "http://cas.byu.edu"
-	url, _ := url.Parse(casURL)
-	client := cas.NewClient(&cas.Options{URL: url})
-	return client.Handler(next)
-=======
 // PassGatekeeper is the check for a user's Active Directory groups against some control groups
 // to allow access based on the needs for the request.
 func PassGatekeeper(user string, control []string) bool {
+	log.Printf("Running Active Directory check -->")
 	ADGroups, err := ad.GetGroupsForUser(user)
 	if err != nil {
 		log.Printf("Error getting groups for the user: %v", err.Error())
@@ -193,10 +187,11 @@ func PassGatekeeper(user string, control []string) bool {
 	for i := range control {
 		for j := range ADGroups {
 			if control[i] == ADGroups[j] {
+				log.Printf("Passed Active Directory check")
 				return true
 			}
 		}
 	}
+	log.Printf("Failed Active Directory check...")
 	return false
->>>>>>> 2ad98bb03360724ae7dc673ec79f33c0346c7ef9
 }
