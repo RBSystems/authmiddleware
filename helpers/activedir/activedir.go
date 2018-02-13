@@ -20,6 +20,14 @@ func GetGroupsForUser(userID string) ([]string, error) {
 	}
 	defer conn.Close()
 
+	username := os.Getenv("LDAP_USERNAME")
+	password := os.Getenv("LDAP_PASSWORD")
+
+	err = conn.Bind(username, password)
+	if err != nil {
+		panic(err)
+	}
+
 	search := ldap.NewSearchRequest(
 		"ou=people,dc=byu,dc=local",
 		ldap.ScopeWholeSubtree,
@@ -31,13 +39,6 @@ func GetGroupsForUser(userID string) ([]string, error) {
 		[]string{"Name", "MemberOf"},
 		nil,
 	)
-	username := os.Getenv("LDAP_USERNAME")
-	password := os.Getenv("LDAP_PASSWORD")
-
-	err = conn.Bind(username, password)
-	if err != nil {
-		panic(err)
-	}
 
 	res, err := conn.Search(search)
 	if err != nil {
