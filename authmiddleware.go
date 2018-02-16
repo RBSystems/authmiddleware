@@ -178,6 +178,7 @@ func checkWSO2(request *http.Request) (bool, error) {
 // to allow access based on the needs for the request.
 func PassGatekeeper(user string, control []string) bool {
 	log.Printf("Running Active Directory check -->")
+	log.Printf("......./```````")
 	ADGroups, err := ad.GetGroupsForUser(user)
 	if err != nil {
 		log.Printf("Error getting groups for the user: %v", err.Error())
