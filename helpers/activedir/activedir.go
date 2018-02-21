@@ -16,7 +16,7 @@ func GetGroupsForUser(userID string) ([]string, error) {
 	conn := ldap.NewLDAPConnection(
 		"cad3.byu.edu",
 		3268)
-	log.Printf("--CHECK 3")
+	log.Printf("--CHECK 3268")
 	err := conn.Connect()
 	log.Printf("--CHECK 4")
 	if err != nil {
