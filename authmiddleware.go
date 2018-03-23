@@ -61,7 +61,7 @@ func AuthenticateUser(next http.Handler) http.Handler {
 			}
 			// Compare User Active Directory groups against the General Control Groups.
 			control := strings.Split(os.Getenv("GEN_CONTROL_GROUPS"), ", ")
-			access := PassGatekeeper(cas.Username(r), control)
+			access := PassActiveDirectory(cas.Username(r), control)
 			if access {
 				next.ServeHTTP(w, r)
 			}
@@ -174,11 +174,10 @@ func checkWSO2(request *http.Request) (bool, error) {
 	return false, nil
 }
 
-// PassGatekeeper is the check for a user's Active Directory groups against some control groups
+// PassActiveDirectory is the check for a user's Active Directory groups against some control groups
 // to allow access based on the needs for the request.
-func PassGatekeeper(user string, control []string) bool {
+func PassActiveDirectory(user string, control []string) bool {
 	log.Printf("Running Active Directory check -->")
-	log.Printf("......./```````")
 	ADGroups, err := ad.GetGroupsForUser(user)
 	if err != nil {
 		log.Printf("Error getting groups for the user: %v", err.Error())
