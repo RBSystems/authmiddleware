@@ -8,6 +8,7 @@ import (
 	"github.com/mavricknz/ldap"
 )
 
+// GetGroupsForUser makes an LDAP connection to find the groups in Active Directory.
 func GetGroupsForUser(userID string) ([]string, error) {
 	groups := []string{}
 	conn := ldap.NewLDAPConnection(
