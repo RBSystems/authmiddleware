@@ -11,8 +11,8 @@ import (
 	"github.com/byuoitav/authmiddleware/bearertoken"
 	ad "github.com/byuoitav/authmiddleware/helpers/activedir"
 	"github.com/byuoitav/authmiddleware/wso2jwt"
+	"github.com/go-cas/cas"
 	"github.com/jessemillar/jsonresp"
-	"github.com/shenshouer/cas"
 )
 
 // Authenticate is the generalized middleware function
