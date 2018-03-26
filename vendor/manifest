@@ -121,10 +121,9 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/shenshouer/cas",
-			"repository": "https://github.com/shenshouer/cas",
+			"importpath": "github.com/go-cas/cas",
+			"repository": "https://github.com/go-cas/cas",
 			"vcs": "git",
-			"revision": "821d0374dcef5f39098905b0bcea19570fbfd78d",
 			"branch": "master",
 			"notests": true
 		},

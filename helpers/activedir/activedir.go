@@ -8,9 +8,9 @@ import (
 	"github.com/mavricknz/ldap"
 )
 
+// GetGroupsForUser makes an LDAP connection to find the groups in Active Directory.
 func GetGroupsForUser(userID string) ([]string, error) {
 	groups := []string{}
-
 	conn := ldap.NewLDAPConnection(
 		"cad3.byu.edu",
 		3268)
@@ -19,15 +19,12 @@ func GetGroupsForUser(userID string) ([]string, error) {
 		panic(err)
 	}
 	defer conn.Close()
-
 	username := os.Getenv("LDAP_USERNAME")
 	password := os.Getenv("LDAP_PASSWORD")
-
 	err = conn.Bind(username, password)
 	if err != nil {
 		panic(err)
 	}
-
 	search := ldap.NewSearchRequest(
 		"ou=people,dc=byu,dc=local",
 		ldap.ScopeWholeSubtree,
@@ -39,12 +36,10 @@ func GetGroupsForUser(userID string) ([]string, error) {
 		[]string{"Name", "MemberOf"},
 		nil,
 	)
-
 	res, err := conn.Search(search)
 	if err != nil {
 		panic(err)
 	}
-
 	//verify name
 	for i := 0; i < len(res.Entries); i++ {
 		name := res.Entries[i].GetAttributeValue("Name")
