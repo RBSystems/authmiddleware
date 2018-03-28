@@ -9,13 +9,14 @@ import (
 	"github.com/mavricknz/ldap"
 )
 
+// GetGroupsForUser find the Active Directory groups for the signed in user.
 func GetGroupsForUser(userID string) ([]string, error) {
 	log.Printf("--CHECK 1")
 	groups := []string{}
 	log.Printf("--CHECK 2")
 	conn := ldap.NewLDAPConnection(
 		"cad3.byu.edu",
-		389)
+		3268)
 	log.Printf("--CHECK 3")
 	err := conn.Connect()
 	log.Printf("--CHECK 4")
