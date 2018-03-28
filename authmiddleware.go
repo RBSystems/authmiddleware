@@ -53,31 +53,29 @@ func AuthenticateUser() func(http.Handler) http.Handler {
 				jsonresp.New(w, http.StatusBadRequest, err.Error())
 				return
 			}
-<<<<<<< HEAD
 			// If it passed the MachineChecks, allow access.
 			if passed {
-=======
-			// Compare User Active Directory groups against the General Control Groups.
-			control := strings.Split(os.Getenv("GEN_CONTROL_GROUPS"), ", ")
-			access := PassActiveDirectory(cas.Username(r), control)
-			if access {
->>>>>>> 40de900ad234f4735505ba6541031be9df18a048
-				next.ServeHTTP(w, r)
-			}
-			// If not, run through user checks with AD
-			if !passed {
-				if !cas.IsAuthenticated(r) {
-					cas.RedirectToLogin(w, r)
-					return
-				}
 				// Compare User Active Directory groups against the General Control Groups.
 				control := strings.Split(os.Getenv("GEN_CONTROL_GROUPS"), ", ")
 				access := PassActiveDirectory(cas.Username(r), control)
 				if access {
 					next.ServeHTTP(w, r)
 				}
-				if !access {
-					jsonresp.New(w, http.StatusBadRequest, "Not authorized")
+				// If not, run through user checks with AD
+				if !passed {
+					if !cas.IsAuthenticated(r) {
+						cas.RedirectToLogin(w, r)
+						return
+					}
+					// Compare User Active Directory groups against the General Control Groups.
+					control := strings.Split(os.Getenv("GEN_CONTROL_GROUPS"), ", ")
+					access := PassActiveDirectory(cas.Username(r), control)
+					if access {
+						next.ServeHTTP(w, r)
+					}
+					if !access {
+						jsonresp.New(w, http.StatusBadRequest, "Not authorized")
+					}
 				}
 			}
 		})
@@ -189,10 +187,7 @@ func checkWSO2(request *http.Request) (bool, error) {
 // PassActiveDirectory is the check for a user's Active Directory groups against some control groups
 // to allow access based on the needs for the request.
 func PassActiveDirectory(user string, control []string) bool {
-<<<<<<< HEAD
-=======
 	log.Printf("Running Active Directory check -->")
->>>>>>> 40de900ad234f4735505ba6541031be9df18a048
 	ADGroups, err := ad.GetGroupsForUser(user)
 	if err != nil {
 		log.Printf("Error getting groups for the user: %v", err.Error())
