@@ -11,8 +11,8 @@ import (
 	"github.com/byuoitav/authmiddleware/bearertoken"
 	ad "github.com/byuoitav/authmiddleware/helpers/activedir"
 	"github.com/byuoitav/authmiddleware/wso2jwt"
+	"github.com/go-cas/cas"
 	"github.com/jessemillar/jsonresp"
-	"github.com/shenshouer/cas"
 )
 
 // Authenticate is the generalized middleware function
@@ -53,8 +53,15 @@ func AuthenticateUser() func(http.Handler) http.Handler {
 				jsonresp.New(w, http.StatusBadRequest, err.Error())
 				return
 			}
+<<<<<<< HEAD
 			// If it passed the MachineChecks, allow access.
 			if passed {
+=======
+			// Compare User Active Directory groups against the General Control Groups.
+			control := strings.Split(os.Getenv("GEN_CONTROL_GROUPS"), ", ")
+			access := PassActiveDirectory(cas.Username(r), control)
+			if access {
+>>>>>>> 40de900ad234f4735505ba6541031be9df18a048
 				next.ServeHTTP(w, r)
 			}
 			// If not, run through user checks with AD
@@ -103,7 +110,7 @@ func MachineChecks(request *http.Request, user bool) (bool, error) {
 		return passed, nil
 	}
 
-	return passed, err
+	return false, err
 }
 
 func checkLocal(r *http.Request, user bool) (bool, error) {
@@ -182,6 +189,10 @@ func checkWSO2(request *http.Request) (bool, error) {
 // PassActiveDirectory is the check for a user's Active Directory groups against some control groups
 // to allow access based on the needs for the request.
 func PassActiveDirectory(user string, control []string) bool {
+<<<<<<< HEAD
+=======
+	log.Printf("Running Active Directory check -->")
+>>>>>>> 40de900ad234f4735505ba6541031be9df18a048
 	ADGroups, err := ad.GetGroupsForUser(user)
 	if err != nil {
 		log.Printf("Error getting groups for the user: %v", err.Error())
@@ -191,9 +202,11 @@ func PassActiveDirectory(user string, control []string) bool {
 	for i := range control {
 		for j := range ADGroups {
 			if control[i] == ADGroups[j] {
+				log.Printf("Passed Active Directory check")
 				return true
 			}
 		}
 	}
+	log.Printf("Failed Active Directory check...")
 	return false
 }
