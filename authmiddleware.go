@@ -72,7 +72,7 @@ func AuthenticateUser(next http.Handler) http.Handler {
 	})
 }
 
-// Boolean function for the standard automated checks that need to pass for any request.
+// MachineChecks is a boolean function for the standard automated checks that need to pass for any request.
 func MachineChecks(request *http.Request, user bool) (bool, error) {
 	passed, err := checkLocal(request, user)
 	if err != nil {
