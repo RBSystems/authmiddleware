@@ -46,6 +46,7 @@ func AuthenticateUser(next http.Handler) http.Handler {
 			log.Printf(r.Cookies()[i].Name)
 			log.Printf(r.Cookies()[i].Value)
 		}
+		r.Header.Set("Access-Control-Allow-Origin", "*")
 		// Run through MachineChecks. If not machine access, it is a user so check their rights.
 		passed, err := MachineChecks(r, true)
 		if err != nil {
