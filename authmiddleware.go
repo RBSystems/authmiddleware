@@ -21,6 +21,7 @@ func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		// If the request can pass the standard authentication then continue with the request.
 		passed, err := MachineChecks(request, false)
+		request.Header.Set("Access-Control-Allow-Origin", "*")
 		if err != nil {
 			jsonresp.New(writer, http.StatusBadRequest, err.Error())
 			return
