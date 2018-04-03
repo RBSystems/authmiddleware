@@ -36,44 +36,43 @@ func Authenticate(next http.Handler) http.Handler {
 }
 
 // AuthenticateUser is the middleware function for user access.
-func AuthenticateUser() func(http.Handler) http.Handler {
+func AuthenticateUser(next http.Handler) http.Handler {
 	u, _ := url.Parse("https://cas.byu.edu/cas")
 	c := cas.NewClient(&cas.Options{
 		URL: u,
 	})
-	return (func(next http.Handler) http.Handler {
-		return c.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
-			for i := 0; i < len(r.Cookies()); i++ {
-				log.Printf(r.Cookies()[i].Name)
-				log.Printf(r.Cookies()[i].Value)
-			}
-			// Run through MachineChecks. If not machine access, it is a user so check their rights.
-			passed, err := MachineChecks(r, true)
-			if err != nil {
-				jsonresp.New(w, http.StatusBadRequest, err.Error())
+	return c.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
+		for i := 0; i < len(r.Cookies()); i++ {
+			log.Printf(r.Cookies()[i].Name)
+			log.Printf(r.Cookies()[i].Value)
+		}
+		r.Header.Set("Access-Control-Allow-Origin", "*")
+		// Run through MachineChecks. If not machine access, it is a user so check their rights.
+		passed, err := MachineChecks(r, true)
+		if err != nil {
+			jsonresp.New(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		// If it passed the MachineChecks, allow access.
+		if passed {
+			next.ServeHTTP(w, r)
+		}
+		// If not, run through user checks with AD
+		if !passed {
+			if !cas.IsAuthenticated(r) {
+				cas.RedirectToLogin(w, r)
 				return
 			}
-			// If it passed the MachineChecks, allow access.
-			if passed {
+			// Compare User Active Directory groups against the General Control Groups.
+			control := strings.Split(os.Getenv("GEN_CONTROL_GROUPS"), ", ")
+			access := PassActiveDirectory(cas.Username(r), control)
+			if access {
 				next.ServeHTTP(w, r)
 			}
-			// If not, run through user checks with AD
-			if !passed {
-				if !cas.IsAuthenticated(r) {
-					cas.RedirectToLogin(w, r)
-					return
-				}
-				// Compare User Active Directory groups against the General Control Groups.
-				control := strings.Split(os.Getenv("GEN_CONTROL_GROUPS"), ", ")
-				access := PassActiveDirectory(cas.Username(r), control)
-				if access {
-					next.ServeHTTP(w, r)
-				}
-				if !access {
-					jsonresp.New(w, http.StatusBadRequest, "Not authorized")
-				}
+			if !access {
+				jsonresp.New(w, http.StatusBadRequest, "Not authorized")
 			}
-		})
+		}
 	})
 }
 
