@@ -28,6 +28,7 @@ func Authenticate(next http.Handler) http.Handler {
 		}
 
 		if passed {
+			request.Header.Set("Access-Control-Allow-Origin", "*")
 			next.ServeHTTP(writer, request)
 			return
 		}
@@ -56,27 +57,24 @@ func AuthenticateUser(next http.Handler) http.Handler {
 		}
 		// If it passed the MachineChecks, allow access.
 		if passed {
+			r.Header.Set("Access-Control-Allow-Origin", "*")
+			next.ServeHTTP(w, r)
+		}
+		// If not, run through user checks with AD
+		if !passed {
+			if !cas.IsAuthenticated(r) {
+				cas.RedirectToLogin(w, r)
+				return
+			}
 			// Compare User Active Directory groups against the General Control Groups.
 			control := strings.Split(os.Getenv("GEN_CONTROL_GROUPS"), ", ")
 			access := PassActiveDirectory(cas.Username(r), control)
 			if access {
+				r.Header.Set("Access-Control-Allow-Origin", "*")
 				next.ServeHTTP(w, r)
 			}
-			// If not, run through user checks with AD
-			if !passed {
-				if !cas.IsAuthenticated(r) {
-					cas.RedirectToLogin(w, r)
-					return
-				}
-				// Compare User Active Directory groups against the General Control Groups.
-				control := strings.Split(os.Getenv("GEN_CONTROL_GROUPS"), ", ")
-				access := PassActiveDirectory(cas.Username(r), control)
-				if access {
-					next.ServeHTTP(w, r)
-				}
-				if !access {
-					jsonresp.New(w, http.StatusBadRequest, "Not authorized")
-				}
+			if !access {
+				jsonresp.New(w, http.StatusBadRequest, "Not authorized")
 			}
 		}
 	})
