@@ -1,8 +1,12 @@
 version: 2
 jobs:
   build:
-    working_directory: ~/byuoitav/authmiddleware
+    docker:
+        - image: byuoitav/build-env:master
+
+    working_directory: /go/src/github.com/byuoitav/authmiddleware
 
     steps:
-    - run: rm -r ~/.gradle || true
-    - run: go test -v -race $(go list ./... | grep -v /vendor/)
+        - checkout
+        - run: rm -r ~/.gradle || true
+        - run: go test -v -race $(go list ./... | grep -v /vendor/)
