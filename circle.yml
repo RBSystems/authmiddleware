@@ -1,7 +1,8 @@
-dependencies:
-    post:
-        - rm -r ~/.gradle || true
+version: 2
+jobs:
+  build:
+    working_directory: ~/byuoitav/authmiddleware
 
-test:
-    override:
-        - go test -v -race $(go list ./... | grep -v /vendor/)
+    steps:
+    - run: rm -r ~/.gradle || true
+    - run: go test -v -race $(go list ./... | grep -v /vendor/)
