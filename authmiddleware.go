@@ -21,6 +21,7 @@ func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		// If the request can pass the standard authentication then continue with the request.
 		passed, err := MachineChecks(request, false)
+		request.Header.Set("Access-Control-Allow-Origin", "*")
 		if err != nil {
 			jsonresp.New(writer, http.StatusBadRequest, err.Error())
 			return
@@ -43,6 +44,11 @@ func AuthenticateUser(next http.Handler) http.Handler {
 		URL: u,
 	})
 	return c.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
+		for i := 0; i < len(r.Cookies()); i++ {
+			log.Printf(r.Cookies()[i].Name)
+			log.Printf(r.Cookies()[i].Value)
+		}
+		r.Header.Set("Access-Control-Allow-Origin", "*")
 		// Run through MachineChecks. If not machine access, it is a user so check their rights.
 		passed, err := MachineChecks(r, true)
 		if err != nil {
