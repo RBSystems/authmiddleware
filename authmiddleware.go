@@ -27,6 +27,7 @@ func Authenticate(next http.Handler) http.Handler {
 		}
 
 		if passed {
+			request.Header.Set("Access-Control-Allow-Origin", "*")
 			next.ServeHTTP(writer, request)
 			return
 		}
