@@ -43,11 +43,6 @@ func AuthenticateUser(next http.Handler) http.Handler {
 		URL: u,
 	})
 	return c.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
-		for i := 0; i < len(r.Cookies()); i++ {
-			log.Printf(r.Cookies()[i].Name)
-			log.Printf(r.Cookies()[i].Value)
-		}
-		r.Header.Set("Access-Control-Allow-Origin", "*")
 		// Run through MachineChecks. If not machine access, it is a user so check their rights.
 		passed, err := MachineChecks(r, true)
 		if err != nil {
@@ -56,6 +51,7 @@ func AuthenticateUser(next http.Handler) http.Handler {
 		}
 		// If it passed the MachineChecks, allow access.
 		if passed {
+			r.Header.Set("Access-Control-Allow-Origin", "*")
 			next.ServeHTTP(w, r)
 		}
 		// If not, run through user checks with AD
@@ -68,6 +64,7 @@ func AuthenticateUser(next http.Handler) http.Handler {
 			control := strings.Split(os.Getenv("GEN_CONTROL_GROUPS"), ", ")
 			access := PassActiveDirectory(cas.Username(r), control)
 			if access {
+				r.Header.Set("Access-Control-Allow-Origin", "*")
 				next.ServeHTTP(w, r)
 			}
 			if !access {
