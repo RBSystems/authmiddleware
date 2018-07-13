@@ -11,6 +11,7 @@ import (
 	ad "github.com/byuoitav/authmiddleware/helpers/activedir"
 	"github.com/byuoitav/authmiddleware/wso2jwt"
 	"github.com/byuoitav/common/log"
+	"github.com/fatih/color"
 	"github.com/go-cas/cas"
 	"github.com/jessemillar/jsonresp"
 )
@@ -63,8 +64,12 @@ func AuthenticateUser(next http.Handler) http.Handler {
 		// If not, run through user checks with AD
 		if !passed {
 			if !cas.IsAuthenticated(r) {
+				log.L.Info("CAS is apparently not authenticated")
 				cas.RedirectToLogin(w, r)
 				return
+			} else {
+				// log.L.Info("Hello")
+				log.L.Info(color.HiRedString("Hello"))
 			}
 			// Compare User Active Directory groups against the General Control Groups.
 			control := strings.Split(os.Getenv("GEN_CONTROL_GROUPS"), ", ")
@@ -110,31 +115,31 @@ func MachineChecks(request *http.Request, user bool) (bool, error) {
 }
 
 func checkLocal(r *http.Request, user bool) (bool, error) {
-	log.L.Info("Local check starting")
+	log.L.Debug("Local check starting")
 
 	if len(os.Getenv("LOCAL_ENVIRONMENT")) > 0 {
-		log.L.Info("LOCAL_ENVIRONMENT is not null")
+		log.L.Debug("LOCAL_ENVIRONMENT is not null")
 		if user {
-			log.L.Info("Checking for localhost IP")
+			log.L.Debug("Checking for localhost IP")
 			// If doing AuthenticateUser, checkLocal can only pass from the localhost.
 			addr := strings.Split(r.RemoteAddr, "]")
 			addr[0] = strings.TrimPrefix(addr[0], "[")
 			if addr[0] != "::1" {
-				log.L.Info("Request not from localhost")
-				log.L.Info("Local check finished")
+				log.L.Debug("Request not from localhost")
+				log.L.Debug("Local check finished")
 				return false, nil
 			}
 		}
-		log.L.Info("Authorized via LOCAL_ENVIRONMENT")
+		log.L.Debug("Authorized via LOCAL_ENVIRONMENT")
 		return true, nil
 	}
 
-	log.L.Info("Local check finished")
+	log.L.Debug("Local check finished")
 	return false, nil
 }
 
 func checkBearerToken(request *http.Request) (bool, error) {
-	log.L.Info("Bearer token check starting")
+	log.L.Debug("Bearer token check starting")
 
 	token := request.Header.Get("Authorization") // Get the token if it exists
 
@@ -151,41 +156,41 @@ func checkBearerToken(request *http.Request) (bool, error) {
 		}
 
 		if valid {
-			log.L.Info("Bearer token authorized")
+			log.L.Debug("Bearer token authorized")
 			return true, nil
 		}
 	}
 
-	log.L.Info("Bearer token check finished")
+	log.L.Debug("Bearer token check finished")
 	return false, nil
 }
 
 func checkWSO2(request *http.Request) (bool, error) {
-	log.L.Info("WSO2 check starting")
+	log.L.Debug("WSO2 check starting")
 
 	token := request.Header.Get("X-jwt-assertion") // Get the token if it exists
 
 	if len(token) > 0 { // Proceed if we found a token
 		valid, err := wso2jwt.Validate(token) // Validate the existing token
 		if err != nil {
-			log.L.Info("Invalid WSO2 information")
+			log.L.Debug("Invalid WSO2 information")
 			return false, err
 		}
 
 		if valid {
-			log.L.Info("WSO2 validated successfully")
+			log.L.Debug("WSO2 validated successfully")
 			return true, nil
 		}
 	}
 
-	log.L.Info("WSO2 check finished")
+	log.L.Debug("WSO2 check finished")
 	return false, nil
 }
 
 // PassActiveDirectory is the check for a user's Active Directory groups against some control groups
 // to allow access based on the needs for the request.
 func PassActiveDirectory(user string, control []string) bool {
-	log.L.Info("Running Active Directory check -->")
+	log.L.Debug("Running Active Directory check -->")
 	ADGroups, err := ad.GetGroupsForUser(user)
 	if err != nil {
 		log.L.Errorf("Error getting groups for the user: %v", err.Error())
@@ -195,11 +200,11 @@ func PassActiveDirectory(user string, control []string) bool {
 	for i := range control {
 		for j := range ADGroups {
 			if control[i] == ADGroups[j] {
-				log.L.Info("Passed Active Directory check")
+				log.L.Debug("Passed Active Directory check")
 				return true
 			}
 		}
 	}
-	log.L.Info("Failed Active Directory check...")
+	log.L.Debug("Failed Active Directory check...")
 	return false
 }
