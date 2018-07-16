@@ -9,4 +9,3 @@ jobs:
     steps:
         - checkout
         - run: gvt fetch -branch $CIRCLE_BRANCH github.com/byuoitav/common
-        - run: go test -v -race $(go list ./... | grep -v /vendor/)
