@@ -1,7 +1,11 @@
-dependencies:
-    post:
-        - rm -r ~/.gradle || true
+version: 2
+jobs:
+  build:
+    docker:
+        - image: byuoitav/build-env:master
 
-test:
-    override:
-        - go test -v -race $(go list ./... | grep -v /vendor/)
+    working_directory: /go/src/github.com/byuoitav/authmiddleware
+
+    steps:
+        - checkout
+        - run: gvt fetch -branch $CIRCLE_BRANCH github.com/byuoitav/common
