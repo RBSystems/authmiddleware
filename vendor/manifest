@@ -82,17 +82,10 @@
 			"notests": true
 		},
 		{
-<<<<<<< HEAD
-			"importpath": "github.com/fatih/color",
-			"repository": "https://github.com/fatih/color",
-			"vcs": "git",
-			"revision": "5df930a27be2502f99b292b7cc09ebad4d0891f4",
-=======
 			"importpath": "github.com/golang/glog",
 			"repository": "https://github.com/golang/glog",
 			"vcs": "git",
 			"revision": "23def4e6c14b4da8ac2ed8007337bc5eb5007998",
->>>>>>> 2ad98bb03360724ae7dc673ec79f33c0346c7ef9
 			"branch": "master",
 			"notests": true
 		},
