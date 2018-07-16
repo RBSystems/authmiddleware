@@ -2,7 +2,6 @@ package authmiddleware
 
 import (
 	"errors"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -11,8 +10,10 @@ import (
 	"github.com/byuoitav/authmiddleware/bearertoken"
 	ad "github.com/byuoitav/authmiddleware/helpers/activedir"
 	"github.com/byuoitav/authmiddleware/wso2jwt"
+	"github.com/byuoitav/common/log"
+	"github.com/fatih/color"
+	"github.com/go-cas/cas"
 	"github.com/jessemillar/jsonresp"
-	"github.com/shenshouer/cas"
 )
 
 // Authenticate is the generalized middleware function
@@ -21,12 +22,14 @@ func Authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		// If the request can pass the standard authentication then continue with the request.
 		passed, err := MachineChecks(request, false)
+		request.Header.Set("Access-Control-Allow-Origin", "*")
 		if err != nil {
 			jsonresp.New(writer, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		if passed {
+			request.Header.Set("Access-Control-Allow-Origin", "*")
 			next.ServeHTTP(writer, request)
 			return
 		}
@@ -41,8 +44,12 @@ func AuthenticateUser(next http.Handler) http.Handler {
 	c := cas.NewClient(&cas.Options{
 		URL: u,
 	})
-
 	return c.HandleFunc(func(w http.ResponseWriter, r *http.Request) {
+		// for i := 0; i < len(r.Cookies()); i++ {
+		// 	log.Printf(r.Cookies()[i].Name)
+		// 	log.Printf(r.Cookies()[i].Value)
+		// }
+		r.Header.Set("Access-Control-Allow-Origin", "*")
 		// Run through MachineChecks. If not machine access, it is a user so check their rights.
 		passed, err := MachineChecks(r, true)
 		if err != nil {
@@ -51,18 +58,24 @@ func AuthenticateUser(next http.Handler) http.Handler {
 		}
 		// If it passed the MachineChecks, allow access.
 		if passed {
+			r.Header.Set("Access-Control-Allow-Origin", "*")
 			next.ServeHTTP(w, r)
 		}
 		// If not, run through user checks with AD
 		if !passed {
 			if !cas.IsAuthenticated(r) {
+				log.L.Info("CAS is apparently not authenticated")
 				cas.RedirectToLogin(w, r)
 				return
+			} else {
+				// log.L.Info("Hello")
+				log.L.Info(color.HiRedString("Hello"))
 			}
 			// Compare User Active Directory groups against the General Control Groups.
 			control := strings.Split(os.Getenv("GEN_CONTROL_GROUPS"), ", ")
-			access := PassGatekeeper(cas.Username(r), control)
+			access := PassActiveDirectory(cas.Username(r), control)
 			if access {
+				r.Header.Set("Access-Control-Allow-Origin", "*")
 				next.ServeHTTP(w, r)
 			}
 			if !access {
@@ -72,7 +85,7 @@ func AuthenticateUser(next http.Handler) http.Handler {
 	})
 }
 
-// Boolean function for the standard automated checks that need to pass for any request.
+// MachineChecks is a boolean function for the standard automated checks that need to pass for any request.
 func MachineChecks(request *http.Request, user bool) (bool, error) {
 	passed, err := checkLocal(request, user)
 	if err != nil {
@@ -102,31 +115,31 @@ func MachineChecks(request *http.Request, user bool) (bool, error) {
 }
 
 func checkLocal(r *http.Request, user bool) (bool, error) {
-	log.Printf("Local check starting")
+	log.L.Debug("Local check starting")
 
 	if len(os.Getenv("LOCAL_ENVIRONMENT")) > 0 {
-		log.Printf("LOCAL_ENVIRONMENT is not null")
+		log.L.Debug("LOCAL_ENVIRONMENT is not null")
 		if user {
-			log.Printf("Checking for localhost IP")
+			log.L.Debug("Checking for localhost IP")
 			// If doing AuthenticateUser, checkLocal can only pass from the localhost.
 			addr := strings.Split(r.RemoteAddr, "]")
 			addr[0] = strings.TrimPrefix(addr[0], "[")
 			if addr[0] != "::1" {
-				log.Printf("Request not from localhost")
-				log.Printf("Local check finished")
+				log.L.Debug("Request not from localhost")
+				log.L.Debug("Local check finished")
 				return false, nil
 			}
 		}
-		log.Printf("Authorized via LOCAL_ENVIRONMENT")
+		log.L.Debug("Authorized via LOCAL_ENVIRONMENT")
 		return true, nil
 	}
 
-	log.Printf("Local check finished")
+	log.L.Debug("Local check finished")
 	return false, nil
 }
 
 func checkBearerToken(request *http.Request) (bool, error) {
-	log.Printf("Bearer token check starting")
+	log.L.Debug("Bearer token check starting")
 
 	token := request.Header.Get("Authorization") // Get the token if it exists
 
@@ -143,56 +156,55 @@ func checkBearerToken(request *http.Request) (bool, error) {
 		}
 
 		if valid {
-			log.Println("Bearer token authorized")
+			log.L.Debug("Bearer token authorized")
 			return true, nil
 		}
 	}
 
-	log.Printf("Bearer token check finished")
+	log.L.Debug("Bearer token check finished")
 	return false, nil
 }
 
 func checkWSO2(request *http.Request) (bool, error) {
-	log.Printf("WSO2 check starting")
+	log.L.Debug("WSO2 check starting")
 
 	token := request.Header.Get("X-jwt-assertion") // Get the token if it exists
 
 	if len(token) > 0 { // Proceed if we found a token
 		valid, err := wso2jwt.Validate(token) // Validate the existing token
 		if err != nil {
-			log.Printf("Invalid WSO2 information")
+			log.L.Debug("Invalid WSO2 information")
 			return false, err
 		}
 
 		if valid {
-			log.Printf("WSO2 validated successfully")
+			log.L.Debug("WSO2 validated successfully")
 			return true, nil
 		}
 	}
 
-	log.Printf("WSO2 check finished")
+	log.L.Debug("WSO2 check finished")
 	return false, nil
 }
 
-// PassGatekeeper is the check for a user's Active Directory groups against some control groups
+// PassActiveDirectory is the check for a user's Active Directory groups against some control groups
 // to allow access based on the needs for the request.
-func PassGatekeeper(user string, control []string) bool {
-	log.Printf("Running Active Directory check -->")
-	log.Printf("......./```````")
+func PassActiveDirectory(user string, control []string) bool {
+	log.L.Debug("Running Active Directory check -->")
 	ADGroups, err := ad.GetGroupsForUser(user)
 	if err != nil {
-		log.Printf("Error getting groups for the user: %v", err.Error())
+		log.L.Errorf("Error getting groups for the user: %v", err.Error())
 		return false
 	}
 
 	for i := range control {
 		for j := range ADGroups {
 			if control[i] == ADGroups[j] {
-				log.Printf("Passed Active Directory check")
+				log.L.Debug("Passed Active Directory check")
 				return true
 			}
 		}
 	}
-	log.Printf("Failed Active Directory check...")
+	log.L.Debug("Failed Active Directory check...")
 	return false
 }
